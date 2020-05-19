@@ -1,0 +1,11 @@
+﻿  gate_emt_dts_win.cpp
+D:\Program Files (x86)\project\gate_emt_dts_win\gate_emt_dts_win.cpp(17,17): warning C4244: =: преобразование "int" в "float", возможна потеря данных
+  tcp_unit.cpp
+D:\Program Files (x86)\project\gate_emt_dts_win\tcp_unit.cpp(37,12): warning C4101: f: неиспользованная локальная переменная
+D:\Program Files (x86)\project\gate_emt_dts_win\tcp_unit.cpp(176,12): warning C4101: f: неиспользованная локальная переменная
+  Создание кода
+  Previous IPDB not found, fall back to full compilation.
+D:\Program Files (x86)\project\gate_emt_dts_win\tcp_unit.cpp(8): warning C4715: tcp_unit::create_tcp_unit: значение возвращается не при всех путях выполнения
+  All 171 functions were compiled because no usable IPDB/IOBJ from previous compilation was found.
+  Создание кода завершено
+  gate_emt_dts_win.vcxproj -> D:\Program Files (x86)\project\gate_emt_dts_win\x64\Release\gate_emt_dts_win.exe
