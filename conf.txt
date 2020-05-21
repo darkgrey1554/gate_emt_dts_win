@@ -1,0 +1,14 @@
+[EMT]
+@EMT_InputDiscrete	10	sharmemory_emt_discrete_in
+@EMT_InputAnalog	15	sharmemory_emt_analog_in
+@EMT_OutputDiscrete	20	sharmemory_emt_discrete_out
+@EMT_OutputAnalog	25	sharmemory_emt_analog_out
+[GATE]
+@GATE_InputDiscrete	0	20	192.168.0.13	19006	1000
+@GATE_InputAnalog	0	25	192.168.0.13	19007	1000
+@GATE_OutputDiscrete	0	10	192.168.0.31	19005	1000
+@GATE_OutputAnalog	0	15	192.168.0.31	19004	1000
+[List]
+@KKS
+EMT	RAEK
+kksN1	kksK1

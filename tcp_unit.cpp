@@ -1,13 +1,219 @@
 #include "tcp_unit.h"
 
 
+
+/// вспомогательные функции
+int read_config_file(const char* Namefile, std::list<ConfigSharedMemory>* listsharmem, std::list<ConfigUnitGate>* listunitgate)
+{
+    FILE* config_file;
+    char simvol = 0;
+    std::string str_info;
+    std::string helpstr;
+    int res_read = 0;
+    int pos[2] = { 0,0 };
+    ConfigSharedMemory UnitMem;
+    ConfigUnitGate UnitGate;
+
+    config_file = fopen(Namefile, "r");
+
+    for (;;)
+    {
+        simvol = 0;
+        str_info.clear();
+        while (simvol != '\n' && res_read != EOF)
+        {
+            res_read = fscanf(config_file, "%c", &simvol);
+            if ((simvol > 0x1F || simvol == '\t') && res_read != EOF) str_info += simvol;
+        }
+
+        if (str_info == "[List]" || res_read == EOF || str_info == "[GATE]" && listunitgate == NULL)
+        {
+            if (res_read == EOF)
+            {
+                std::cout << "MAIT\tERROR_FORMATION_OF_CONFIG_FILE" << std::endl;
+                getch();
+                return -1;
+            }
+            break;
+        }
+
+        if (str_info.substr(0, 4) == "@EMT")
+        {
+            pos[0] = 0;
+            pos[1] = 0;
+            UnitMem.clear();
+
+            if (str_info.find("Input") != -1)
+            {
+                UnitMem.type_data = TypeData::InPut;
+            }
+            else if (str_info.find("Output") != -1)
+            {
+                UnitMem.type_data = TypeData::OutPut;
+            }
+            else
+            {
+                std::cout << "MAIT\tERROR_FORMATION_OF_CONFIG_FILE" << std::endl;
+                getch();
+                return -1;
+            }
+
+            if (str_info.find("Discrete") != -1)
+            {
+                UnitMem.type_signal = TypeSignal::Discrete;
+            }
+            else if (str_info.find("Analog") != -1)
+            {
+                UnitMem.type_signal = TypeSignal::Analog;
+            }
+            else
+            {
+                std::cout << "MAIT\tERROR_FORMATION_OF_CONFIG_FILE" << std::endl;
+                getch();
+                return -1;
+            }
+
+            pos[0] = str_info.find('\t', 0);
+            if (pos[0] == -1)
+            {
+                std::cout << "MAINT\tERROR_FORMATION_OF_CONFIG_FILE" << std::endl;
+                getch();
+                return -1;
+            }
+
+            pos[1] = str_info.find('\t', pos[0] + 1);
+            if (pos[1] == -1)
+            {
+                std::cout << "MAINT\tERROR_FORMATION_OF_CONFIG_FILE" << std::endl;
+                getch();
+                return -1;
+            }
+            helpstr.clear();
+            helpstr = str_info.substr(pos[0] + 1, pos[1] - pos[0] - 1);
+            UnitMem.size = atoi(helpstr.c_str());
+            helpstr.clear();
+            helpstr = str_info.substr(pos[1] + 1);
+            UnitMem.name_memory = helpstr;
+            listsharmem->push_back(UnitMem);
+        }
+        else if (str_info.substr(0, 5) == "@GATE")
+        {
+            pos[0] = 0;
+            pos[1] = 0;
+            UnitGate.clear();
+
+            if (str_info.find("Input") != -1)
+            {
+                UnitGate.type_unit = TypeUnitGate::CLIENT;
+            }
+            else if (str_info.find("Output") != -1)
+            {
+                UnitGate.type_unit = TypeUnitGate::SERVER;
+            }
+            else
+            {
+                std::cout << "MAIT\tERROR_FORMATION_OF_CONFIG_FILE" << std::endl;
+                getch();
+                return -1;
+            }
+
+            if (str_info.find("Discrete") != -1)
+            {
+                UnitGate.type_signal = TypeSignal::Discrete;
+            }
+            else if (str_info.find("Analog") != -1)
+            {
+                UnitGate.type_signal = TypeSignal::Analog;
+            }
+            else
+            {
+                std::cout << "MAIT\tERROR_FORMATION_OF_CONFIG_FILE" << std::endl;
+                getch();
+                return -1;
+            }
+
+            pos[0] = str_info.find('\t', 0);
+            if (pos[0] == -1)
+            {
+                std::cout << "MAINT\tERROR_FORMATION_OF_CONFIG_FILE" << std::endl;
+                getch();
+                return -1;
+            }
+            pos[1] = str_info.find('\t', pos[0] + 1);
+            if (pos[1] == -1)
+            {
+                std::cout << "MAINT\tERROR_FORMATION_OF_CONFIG_FILE" << std::endl;
+                getch();
+                return -1;
+            }
+
+            helpstr.clear();
+            helpstr = str_info.substr(pos[0] + 1, pos[1] - pos[0] - 1);
+            UnitGate.offset = atoi(helpstr.c_str());
+
+            pos[0] = pos[1];
+            pos[1] = str_info.find('\t', pos[0] + 1);
+            if (pos[1] == -1)
+            {
+                std::cout << "MAINT\tERROR_FORMATION_OF_CONFIG_FILE" << std::endl;
+                getch();
+                return -1;
+            }
+            helpstr.clear();
+            helpstr = str_info.substr(pos[0] + 1, pos[1] - pos[0] - 1);
+            UnitGate.size_data = atoi(helpstr.c_str());
+
+            pos[0] = pos[1];
+            pos[1] = str_info.find('\t', pos[0] + 1);
+            if (pos[1] == -1)
+            {
+                std::cout << "MAINT\tERROR_FORMATION_OF_CONFIG_FILE" << std::endl;
+                getch();
+                return -1;
+            }
+            helpstr.clear();
+            helpstr = str_info.substr(pos[0] + 1, pos[1] - pos[0] - 1);
+            UnitGate.IP = helpstr.c_str();
+
+            pos[0] = pos[1];
+            pos[1] = str_info.find('\t', pos[0] + 1);
+            if (pos[1] == -1)
+            {
+                std::cout << "MAINT\tERROR_FORMATION_OF_CONFIG_FILE" << std::endl;
+                getch();
+                return -1;
+            }
+            helpstr.clear();
+            helpstr = str_info.substr(pos[0] + 1, pos[1] - pos[0] - 1);
+            UnitGate.Port = atoi(helpstr.c_str());
+
+            pos[0] = pos[1];
+            helpstr.clear();
+            helpstr = str_info.substr(pos[0] + 1);
+            UnitGate.frequency = atoi(helpstr.c_str());
+            listunitgate->push_back(UnitGate);
+        }
+        else if (str_info.substr(0, 5) != "[EMT]" && str_info.substr(0, 6) != "[GATE]")
+        {
+            std::cout << "MAIN\tERROR_FORMATION_OF_CONFIG_FILE" << std::endl;
+            getch();
+            return -1;
+        }
+    }
+    return 0;
+}
+
+
+/// TCP_UNIT
 tcp_unit* tcp_unit::create_tcp_unit(std::string type_unit, int id, std::string ip, int port, std::string t_data, int s_data, char* mass_data, int bais)
 {
     if (type_unit == "Server") return new tcp_server(id, ip, port, t_data, s_data, mass_data, bais);
     if (type_unit == "Client")return new tcp_client(id, ip, port, t_data, s_data, mass_data, bais);;
 }
 
- tcp_server::tcp_server(int id, std::string ip, int port, std::string t_data, int s_data, char* m_data, int bais)
+
+/// TCP _SERVER
+tcp_server::tcp_server(int id, std::string ip, int port, std::string t_data, int s_data, char* m_data, int bais)
 {
      ID = id;
      IP_Server = ip;
@@ -132,7 +338,6 @@ int tcp_server::thread_tcp_server()
     return 0;
 }
 
-
 void tcp_server::restart_thread()
 {
     std::cout << "restart_thread" << std::endl;
@@ -144,8 +349,7 @@ void tcp_server::close_tcp_unit()
 }
 
 
-
-
+/// TCP_CLIENT
 tcp_client::tcp_client(int id, std::string ip, int port, std::string t_data, int s_data, char* m_data, int bais)
 {
     ID = id;

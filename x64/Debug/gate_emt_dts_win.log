@@ -1,0 +1,15 @@
+﻿  gate_emt_dts_win.cpp
+D:\Program Files (x86)\project\gate_emt_dts_win\gate_emt_dts_win.cpp(26,18): warning C4244: =: преобразование "int" в "float", возможна потеря данных
+  tcp_unit.cpp
+D:\Program Files (x86)\project\gate_emt_dts_win\tcp_unit.cpp(76,44): warning C4267: =: преобразование из "size_t" в "int"; возможна потеря данных
+D:\Program Files (x86)\project\gate_emt_dts_win\tcp_unit.cpp(84,53): warning C4267: =: преобразование из "size_t" в "int"; возможна потеря данных
+D:\Program Files (x86)\project\gate_emt_dts_win\tcp_unit.cpp(135,44): warning C4267: =: преобразование из "size_t" в "int"; возможна потеря данных
+D:\Program Files (x86)\project\gate_emt_dts_win\tcp_unit.cpp(142,53): warning C4267: =: преобразование из "size_t" в "int"; возможна потеря данных
+D:\Program Files (x86)\project\gate_emt_dts_win\tcp_unit.cpp(155,53): warning C4267: =: преобразование из "size_t" в "int"; возможна потеря данных
+D:\Program Files (x86)\project\gate_emt_dts_win\tcp_unit.cpp(167,53): warning C4267: =: преобразование из "size_t" в "int"; возможна потеря данных
+D:\Program Files (x86)\project\gate_emt_dts_win\tcp_unit.cpp(179,53): warning C4267: =: преобразование из "size_t" в "int"; возможна потеря данных
+D:\Program Files (x86)\project\gate_emt_dts_win\tcp_unit.cpp(243,12): warning C4101: f: неиспользованная локальная переменная
+D:\Program Files (x86)\project\gate_emt_dts_win\tcp_unit.cpp(380,12): warning C4101: f: неиспользованная локальная переменная
+  Создание кода...
+D:\Program Files (x86)\project\gate_emt_dts_win\tcp_unit.cpp(212): warning C4715: tcp_unit::create_tcp_unit: значение возвращается не при всех путях выполнения
+  gate_emt_dts_win.vcxproj -> D:\Program Files (x86)\project\gate_emt_dts_win\x64\Debug\gate_emt_dts_win.exe

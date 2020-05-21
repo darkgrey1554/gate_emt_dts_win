@@ -8,21 +8,30 @@
 
 int main()
 {
-   
- 
+    std::list<ConfigSharedMemory> memory;
+    std::list<ConfigUnitGate> gaties;
+
+    if (read_config_file("conf.txt", &memory, &gaties) != 0)
+    {
+        std::cout << "ERROR" << std::endl;
+        getch();
+        return -1;
+    }
+
+
     float* out = new float[100];
     float* in = new float[100];
     for (int i = 0; i < 100; i++)
     {
-       out[i] = i;
+        out[i] = i;
     }
 
     std::cout << "Hello World!\n";
-    
-    tcp_unit* ser1 = tcp_unit::create_tcp_unit("Server",1, "127.0.0.1", 32000, "analog", 100, (char*)out,0);
-    tcp_unit* cli1 = tcp_unit::create_tcp_unit("Client", 1, "127.0.0.1", 32000, "analog", 100, (char*)in, 0);
 
-    next:
+    //tcp_unit* ser1 = tcp_unit::create_tcp_unit("Server",1, "127.0.0.1", 32000, "analog", 100, (char*)out,0);
+    tcp_unit* cli1 = tcp_unit::create_tcp_unit("Client", 1, "192.168.109.128", 32000, "analog", 100, (char*)in, 0);
+
+next:
     Sleep(2000);
     for (int i = 0; i < 100; i++)
     {
@@ -34,7 +43,4 @@ int main()
 
     goto next;
 
-    
 }
-
-
