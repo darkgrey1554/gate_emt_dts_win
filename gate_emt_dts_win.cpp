@@ -52,7 +52,7 @@ int main()
 
     for (int i = 0; i < 100; i++)
     {
-        out[i] = i;
+        out[i] = (float)i;
     }
 
     std::cout << "Hello World!\n";

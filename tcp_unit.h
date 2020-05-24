@@ -11,6 +11,9 @@
 #include <list>
 #pragma warning(disable:4996)
 
+
+#define TIME_DIV 20
+
 enum class TypeData
 {
     Not,
@@ -52,12 +55,12 @@ struct ConfigSharedMemory
 struct ConfigUnitGate
 {
     std::string IP;
-    int Port;
-    int frequency;
-    int offset;
-    int size_data;
-    TypeSignal type_signal;
-    TypeUnitGate type_unit;
+    int Port=0;
+    int frequency=0;
+    int offset=0;
+    int size_data=0;
+    TypeSignal type_signal=TypeSignal::Nothing;
+    TypeUnitGate type_unit=TypeUnitGate::EMPTY;
     char* buf_data;
     HANDLE mutex_data = INVALID_HANDLE_VALUE;
 
@@ -80,14 +83,8 @@ int read_config_file(const char* Namefile, std::list<ConfigSharedMemory>* listsh
 class tcp_unit
 {
  public:
-	TypeUnitGate type_unit;
-	std::thread thread_unit;
-	TypeSignal type_signal;
-	int size_data;
-	int frequency;
-	int ID;
-	int offset;
-    char* mass_data;
+	
+    ConfigUnitGate set;
 
 	void virtual restart_thread() {}
 	void virtual close_tcp_unit() {}
@@ -98,11 +95,10 @@ class tcp_unit
 
 class tcp_server : public tcp_unit
 {
-	std::string IP_Server;
-	int PORT;
-    HANDLE mutex_data = INVALID_HANDLE_VALUE;
 
 	int thread_tcp_server();
+    std::thread thread_unit;
+    int ID;
 
     public:
 
@@ -113,12 +109,10 @@ class tcp_server : public tcp_unit
 
 class tcp_client : public tcp_unit
 {
-	std::string IP_Server;
-	int PORT;
-    HANDLE mutex_data = INVALID_HANDLE_VALUE;
 
 	int thread_tcp_client();
-
+    std::thread thread_unit;
+    int ID;
 public:
 
 	tcp_client(ConfigUnitGate confgatem, int id);

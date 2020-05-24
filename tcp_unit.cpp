@@ -82,7 +82,7 @@ int read_config_file(const char* Namefile, std::list<ConfigSharedMemory>* listsh
                 return -1;
             }
 
-            pos[1] = str_info.find('\t', pos[0] + 1);
+            pos[1] = str_info.find('\t', (size_t)pos[0] + 1);
             if (pos[1] == -1)
             {
                 std::cout << "MAINT\tERROR_FORMATION_OF_CONFIG_FILE" << std::endl;
@@ -90,10 +90,10 @@ int read_config_file(const char* Namefile, std::list<ConfigSharedMemory>* listsh
                 return -1;
             }
             helpstr.clear();
-            helpstr = str_info.substr(pos[0] + 1, pos[1] - pos[0] - 1);
+            helpstr = str_info.substr((size_t)pos[0] + 1, (size_t)pos[1] - pos[0] - 1);
             UnitMem.size = atoi(helpstr.c_str());
             helpstr.clear();
-            helpstr = str_info.substr(pos[1] + 1);
+            helpstr = str_info.substr((size_t)pos[1] + 1);
             UnitMem.name_memory = helpstr;
             listsharmem->push_back(UnitMem);
         }
@@ -140,7 +140,7 @@ int read_config_file(const char* Namefile, std::list<ConfigSharedMemory>* listsh
                 getch();
                 return -1;
             }
-            pos[1] = str_info.find('\t', pos[0] + 1);
+            pos[1] = str_info.find('\t', (size_t)pos[0] + 1);
             if (pos[1] == -1)
             {
                 std::cout << "MAINT\tERROR_FORMATION_OF_CONFIG_FILE" << std::endl;
@@ -149,11 +149,11 @@ int read_config_file(const char* Namefile, std::list<ConfigSharedMemory>* listsh
             }
 
             helpstr.clear();
-            helpstr = str_info.substr(pos[0] + 1, pos[1] - pos[0] - 1);
+            helpstr = str_info.substr((size_t)pos[0] + 1, (size_t)pos[1] - pos[0] - 1);
             UnitGate.offset = atoi(helpstr.c_str());
 
             pos[0] = pos[1];
-            pos[1] = str_info.find('\t', pos[0] + 1);
+            pos[1] = str_info.find('\t', (size_t)pos[0] + 1);
             if (pos[1] == -1)
             {
                 std::cout << "MAINT\tERROR_FORMATION_OF_CONFIG_FILE" << std::endl;
@@ -161,11 +161,11 @@ int read_config_file(const char* Namefile, std::list<ConfigSharedMemory>* listsh
                 return -1;
             }
             helpstr.clear();
-            helpstr = str_info.substr(pos[0] + 1, pos[1] - pos[0] - 1);
+            helpstr = str_info.substr((size_t)pos[0] + 1, (size_t)pos[1] - pos[0] - 1);
             UnitGate.size_data = atoi(helpstr.c_str());
 
             pos[0] = pos[1];
-            pos[1] = str_info.find('\t', pos[0] + 1);
+            pos[1] = str_info.find('\t', (size_t)pos[0] + 1);
             if (pos[1] == -1)
             {
                 std::cout << "MAINT\tERROR_FORMATION_OF_CONFIG_FILE" << std::endl;
@@ -173,11 +173,11 @@ int read_config_file(const char* Namefile, std::list<ConfigSharedMemory>* listsh
                 return -1;
             }
             helpstr.clear();
-            helpstr = str_info.substr(pos[0] + 1, pos[1] - pos[0] - 1);
+            helpstr = str_info.substr((size_t)pos[0] + 1, (size_t)pos[1] - pos[0] - 1);
             UnitGate.IP = helpstr.c_str();
 
             pos[0] = pos[1];
-            pos[1] = str_info.find('\t', pos[0] + 1);
+            pos[1] = str_info.find('\t', (size_t)pos[0] + 1);
             if (pos[1] == -1)
             {
                 std::cout << "MAINT\tERROR_FORMATION_OF_CONFIG_FILE" << std::endl;
@@ -185,12 +185,12 @@ int read_config_file(const char* Namefile, std::list<ConfigSharedMemory>* listsh
                 return -1;
             }
             helpstr.clear();
-            helpstr = str_info.substr(pos[0] + 1, pos[1] - pos[0] - 1);
+            helpstr = str_info.substr((size_t)pos[0] + 1, (size_t)pos[1] - pos[0] - 1);
             UnitGate.Port = atoi(helpstr.c_str());
 
             pos[0] = pos[1];
             helpstr.clear();
-            helpstr = str_info.substr(pos[0] + 1);
+            helpstr = str_info.substr((size_t)pos[0] + 1);
             UnitGate.frequency = atoi(helpstr.c_str());
             listunitgate->push_back(UnitGate);
         }
@@ -223,20 +223,14 @@ tcp_unit* tcp_unit::create_tcp_unit(ConfigUnitGate gate, int id)
 /// TCP _SERVER
 tcp_server::tcp_server(ConfigUnitGate confgate, int id)
 {
+     set = confgate;
      ID = id;
-     IP_Server = confgate.IP;
-     PORT = confgate.Port;
-     size_data = confgate.size_data;
-     mass_data = confgate.buf_data;
-     type_signal = confgate.type_signal;
-     offset = confgate.offset*4;
-     mutex_data = confgate.mutex_data;
-     
-     if (type_signal == TypeSignal::Analog || type_signal == TypeSignal::Discrete)
+     if (set.type_signal == TypeSignal::Analog || set.type_signal == TypeSignal::Discrete)
      {
-         size_data *= 4;
-         offset *= 4;
+         set.size_data *= 4;
+         set.offset *= 4;
      }
+
      thread_unit = std::thread(&tcp_server::thread_tcp_server, this);
 }
 
@@ -252,10 +246,15 @@ int tcp_server::thread_tcp_server()
     char* buf_recv = new char[10];
     int count_recv = 0;
     int num_recv = 1;
-    char* buf_send = new char[size_data * 4+4+1];
+    char* buf_send = new char[set.size_data * 4+4+1];
     char* ibuf_send;
     char* imass_data;
-    float* f;
+
+    LARGE_INTEGER timenow;
+    LARGE_INTEGER timelast;
+    LARGE_INTEGER fhz;
+    QueryPerformanceFrequency(&fhz);
+    float time;
 
     result = WSAStartup(MAKEWORD(2, 2), &wsaData);
     if (result != 0)
@@ -272,8 +271,8 @@ int tcp_server::thread_tcp_server()
     }
 
     addr_server.sin_family = AF_INET;
-    addr_server.sin_addr.s_addr = inet_addr(IP_Server.c_str());
-    addr_server.sin_port = htons(PORT);
+    addr_server.sin_addr.s_addr = inet_addr(set.IP.c_str());
+    addr_server.sin_port = htons(set.Port);
     
     result = bind(listensocket, (sockaddr*)&addr_server, sizeof(addr_server));
     if (result == SOCKET_ERROR)
@@ -291,9 +290,9 @@ int tcp_server::thread_tcp_server()
     }
 
     std::cout << "SERVER INITIALIZED ID: " << ID
-        << " IP: " << IP_Server
-        << " PORT: " << PORT
-        << " TYPE_SIGNAL: " << type_signal << std::endl;
+        << " IP: " << set.IP
+        << " PORT: " << set.Port
+        << " TYPE_SIGNAL: " << set.type_signal << std::endl;
 
     for (;;)
     {
@@ -311,6 +310,8 @@ int tcp_server::thread_tcp_server()
             << (int)addr_client.sin_addr.S_un.S_un_b.s_b4
             << "  PORT: " << addr_client.sin_port << std::endl;        
         
+        QueryPerformanceCounter(&timenow);
+        QueryPerformanceCounter(&timelast);
         for (;;)
         {
             count_recv = 0;
@@ -326,6 +327,11 @@ int tcp_server::thread_tcp_server()
                 break;
             }
 
+            QueryPerformanceCounter(&timenow);
+            time = (timenow.QuadPart - timelast.QuadPart) * 1000. / fhz.QuadPart;
+            if (time > set.frequency) std::cout << "SERVER ID: " << ID << "\tWARNING: LIMIT_TIME_MESSENG_READING_EXCEEDED " << time << std::endl;
+            QueryPerformanceCounter(&timelast);
+
             if (buf_recv[0] == 3)
             {
                 ibuf_send = buf_send;
@@ -333,19 +339,20 @@ int tcp_server::thread_tcp_server()
                 for (int i = 0; i < 4; i++)
                 {
                     ibuf_send++;
-                    *ibuf_send = *(((char*)&size_data) + i);
+                    *ibuf_send = *(((char*)&set.size_data) + i);
                 }
 
                 ibuf_send++;
-                imass_data = mass_data;               
-                for (int i = 0; i < size_data * 4; i++)
+                imass_data = set.buf_data;               
+                for (int i = 0; i < set.size_data * 4; i++)
                 {
                     *ibuf_send = *imass_data;
                     ibuf_send++;
                     imass_data++;
                 }
 
-                send(client, buf_send, size_data * 4 + 5, NULL);         
+                send(client, buf_send, set.size_data * 4 + 5, NULL);    
+
             }
         }
     }
@@ -368,18 +375,12 @@ void tcp_server::close_tcp_unit()
 tcp_client::tcp_client(ConfigUnitGate confgate, int id)
 {
     ID = id;
-    IP_Server = confgate.IP;
-    PORT = confgate.Port;
-    size_data = confgate.size_data;
-    mass_data = confgate.buf_data;
-    type_signal = confgate.type_signal;
-    offset = confgate.offset * 4;
-    mutex_data = confgate.mutex_data;
+    set = confgate;
 
-    if (type_signal == TypeSignal::Analog || type_signal == TypeSignal::Discrete)
+    if (set.type_signal == TypeSignal::Analog || set.type_signal == TypeSignal::Discrete)
     {
-        size_data *= 4;
-        offset *= 4;
+        set.size_data *= 4;
+        set.offset *= 4;
     }
     thread_unit = std::thread(&tcp_client::thread_tcp_client, this);
 }
@@ -392,14 +393,18 @@ int tcp_client::thread_tcp_client()
     sockaddr_in addr_server;
     int size_addr = sizeof(addr_server);
 
-    char* buf_recv = new char[size_data*4+5];
+    char* buf_recv = new char[set.size_data*4+5];
     int count_recv = 0;
     int num_recv = 0;
     char* ibuf_recv;
     char* imass_data;
+    char* buf_send = new char[1];
 
-    char* buf_send = new char[1];  
-    float* f;
+    LARGE_INTEGER timenow;
+    LARGE_INTEGER timelast;
+    LARGE_INTEGER fhz;
+    QueryPerformanceFrequency(&fhz);
+    float time;
 
     result = WSAStartup(MAKEWORD(2, 2), &wsaData);
     if (result != 0)
@@ -416,8 +421,10 @@ int tcp_client::thread_tcp_client()
     }
 
     addr_server.sin_family = AF_INET;
-    addr_server.sin_addr.s_addr = inet_addr(IP_Server.c_str());
-    addr_server.sin_port = htons(PORT);
+    addr_server.sin_addr.s_addr = inet_addr(set.IP.c_str());
+    addr_server.sin_port = htons(set.Port);
+
+    
           
     for (;;)
     {
@@ -431,37 +438,47 @@ int tcp_client::thread_tcp_client()
         }
         else
         {
-            std::cout << "CLIENT ID: " << ID << " CONNECTED WITH SERVER IP: " << IP_Server << " PORT: " << PORT << std::endl;
+            std::cout << "CLIENT ID: " << ID << " CONNECTED WITH SERVER IP: " << set.IP << " PORT: " << set.Port << std::endl;
         }
 
+        QueryPerformanceCounter(&timenow);
+        QueryPerformanceCounter(&timelast);
+
         for (;;)
-        {
+        {           
+            QueryPerformanceCounter(&timenow);
+            time = (timenow.QuadPart - timelast.QuadPart) * 1000. / fhz.QuadPart;
+            if (time > set.frequency) std::cout << "CLIENT ID: " << ID << "\tWARNING: LIMIT_TIME_MESSENG_READING_EXCEEDED " << time << std::endl;
+                
+            for (;;)
+            {
+                QueryPerformanceCounter(&timenow);
+                time= (timenow.QuadPart - timelast.QuadPart) * 1000. / fhz.QuadPart;
+                if (time > set.frequency-TIME_DIV) break;
+                Sleep(1);
+            }
+
+            QueryPerformanceCounter(&timelast);
             buf_send[0] = 3;
             send(server, buf_send, 1, NULL);
             count_recv = 0;
             for (;;)
             {
-                count_recv += recv(server, buf_recv + count_recv, size_data * 4 + 5 - count_recv, NULL);
+                count_recv += recv(server, buf_recv + count_recv, set.size_data * 4 + 5 - count_recv, NULL);
                 if (count_recv < 5) continue;
                 num_recv = *((int*)(buf_recv + 1));
                 if (count_recv < num_recv * 4 + 5) { continue; }
                 else break;
             }
             ibuf_recv = buf_recv + 5;
-            imass_data = mass_data;
+            imass_data = set.buf_data;
 
-            //f = (float*)(buf_recv + 5);
-            //for (int i = 0; i < 10; i++) std::cout << f[i] << std::endl;
-
-            for (int i = 0; i < num_recv*4; i++)
+            for (int i = 0; i < num_recv * 4; i++)
             {
                 *imass_data = *ibuf_recv;
                 imass_data++;
                 ibuf_recv++;
             }
-
-            Sleep(frequency); // здесь реализовать частоту посылки запрос;
-          
         }
     }
 

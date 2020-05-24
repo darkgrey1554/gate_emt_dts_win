@@ -1,18 +1,18 @@
 ﻿  gate_emt_dts_win.cpp
-D:\Program Files (x86)\project\gate_emt_dts_win\gate_emt_dts_win.cpp(55,18): warning C4244: =: преобразование "int" в "float", возможна потеря данных
   tcp_unit.cpp
 D:\Program Files (x86)\project\gate_emt_dts_win\tcp_unit.cpp(77,44): warning C4267: =: преобразование из "size_t" в "int"; возможна потеря данных
-D:\Program Files (x86)\project\gate_emt_dts_win\tcp_unit.cpp(85,53): warning C4267: =: преобразование из "size_t" в "int"; возможна потеря данных
+D:\Program Files (x86)\project\gate_emt_dts_win\tcp_unit.cpp(85,61): warning C4267: =: преобразование из "size_t" в "int"; возможна потеря данных
 D:\Program Files (x86)\project\gate_emt_dts_win\tcp_unit.cpp(136,44): warning C4267: =: преобразование из "size_t" в "int"; возможна потеря данных
-D:\Program Files (x86)\project\gate_emt_dts_win\tcp_unit.cpp(143,53): warning C4267: =: преобразование из "size_t" в "int"; возможна потеря данных
-D:\Program Files (x86)\project\gate_emt_dts_win\tcp_unit.cpp(156,53): warning C4267: =: преобразование из "size_t" в "int"; возможна потеря данных
-D:\Program Files (x86)\project\gate_emt_dts_win\tcp_unit.cpp(168,53): warning C4267: =: преобразование из "size_t" в "int"; возможна потеря данных
-D:\Program Files (x86)\project\gate_emt_dts_win\tcp_unit.cpp(180,53): warning C4267: =: преобразование из "size_t" в "int"; возможна потеря данных
-D:\Program Files (x86)\project\gate_emt_dts_win\tcp_unit.cpp(258,12): warning C4101: f: неиспользованная локальная переменная
-D:\Program Files (x86)\project\gate_emt_dts_win\tcp_unit.cpp(402,12): warning C4101: f: неиспользованная локальная переменная
+D:\Program Files (x86)\project\gate_emt_dts_win\tcp_unit.cpp(143,61): warning C4267: =: преобразование из "size_t" в "int"; возможна потеря данных
+D:\Program Files (x86)\project\gate_emt_dts_win\tcp_unit.cpp(156,61): warning C4267: =: преобразование из "size_t" в "int"; возможна потеря данных
+D:\Program Files (x86)\project\gate_emt_dts_win\tcp_unit.cpp(168,61): warning C4267: =: преобразование из "size_t" в "int"; возможна потеря данных
+D:\Program Files (x86)\project\gate_emt_dts_win\tcp_unit.cpp(180,61): warning C4267: =: преобразование из "size_t" в "int"; возможна потеря данных
+D:\Program Files (x86)\project\gate_emt_dts_win\tcp_unit.cpp(331,67): warning C4244: =: преобразование "double" в "float", возможна потеря данных
+D:\Program Files (x86)\project\gate_emt_dts_win\tcp_unit.cpp(450,67): warning C4244: =: преобразование "double" в "float", возможна потеря данных
+D:\Program Files (x86)\project\gate_emt_dts_win\tcp_unit.cpp(456,70): warning C4244: =: преобразование "double" в "float", возможна потеря данных
   Создание кода
   Previous IPDB not found, fall back to full compilation.
 D:\Program Files (x86)\project\gate_emt_dts_win\tcp_unit.cpp(220): warning C4715: tcp_unit::create_tcp_unit: значение возвращается не при всех путях выполнения
-  All 430 functions were compiled because no usable IPDB/IOBJ from previous compilation was found.
+  All 429 functions were compiled because no usable IPDB/IOBJ from previous compilation was found.
   Создание кода завершено
   gate_emt_dts_win.vcxproj -> D:\Program Files (x86)\project\gate_emt_dts_win\x64\Release\gate_emt_dts_win.exe
