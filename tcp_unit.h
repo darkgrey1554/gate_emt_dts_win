@@ -25,6 +25,8 @@ enum class TypeSignal
     Discrete
 };
 
+std::ostream& operator<<(std::ostream &out,TypeSignal& m);
+
 enum class TypeUnitGate
 {
     EMPTY,
@@ -78,9 +80,9 @@ int read_config_file(const char* Namefile, std::list<ConfigSharedMemory>* listsh
 class tcp_unit
 {
  public:
-	std::string type_unit;
+	TypeUnitGate type_unit;
 	std::thread thread_unit;
-	std::string type_data;
+	TypeSignal type_signal;
 	int size_data;
 	int frequency;
 	int ID;
@@ -90,7 +92,7 @@ class tcp_unit
 	void virtual restart_thread() {}
 	void virtual close_tcp_unit() {}
 
-	static tcp_unit* create_tcp_unit(std::string type_unit, int id, std::string ip, int port, std::string t_data, int s_data, char* mass_data, int bais);
+	static tcp_unit* create_tcp_unit(ConfigUnitGate gate, int id);
 
 };
 
@@ -98,12 +100,13 @@ class tcp_server : public tcp_unit
 {
 	std::string IP_Server;
 	int PORT;
+    HANDLE mutex_data = INVALID_HANDLE_VALUE;
 
 	int thread_tcp_server();
 
     public:
 
-	tcp_server(int id, std::string ip, int port, std::string t_data, int s_data, char* mass_data, int bais);
+	tcp_server(ConfigUnitGate confgatem, int id);
 	void restart_thread() override;
 	void close_tcp_unit() override;
 };
@@ -112,14 +115,29 @@ class tcp_client : public tcp_unit
 {
 	std::string IP_Server;
 	int PORT;
+    HANDLE mutex_data = INVALID_HANDLE_VALUE;
 
 	int thread_tcp_client();
 
 public:
 
-	tcp_client(int id, std::string ip, int port, std::string t_data, int s_data, char* mass_data, int bais);
+	tcp_client(ConfigUnitGate confgatem, int id);
 	void restart_thread() override;
 	void close_tcp_unit() override;
+};
+
+
+class UnitSharedMemory
+{
+    public:
+    HANDLE memory;
+    HANDLE mutex;
+    char* buf;    
+    ConfigSharedMemory parametrs; 
+
+    UnitSharedMemory(ConfigSharedMemory in_parametrs);
+    int FillConfigUnitGate(ConfigUnitGate* configgate);
+
 };
 
 

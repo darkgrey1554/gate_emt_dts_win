@@ -8,31 +8,64 @@
 
 int main()
 {
+
     std::list<ConfigSharedMemory> memory;
     std::list<ConfigUnitGate> gaties;
 
+    TypeSignal m = TypeSignal::Analog;
+
     if (read_config_file("conf.txt", &memory, &gaties) != 0)
     {
-        std::cout << "ERROR" << std::endl;
+        std::cout << "ERROR READ CONFIG FILE" << std::endl;
         getch();
         return -1;
     }
+    
+    UnitSharedMemory* m1 = new UnitSharedMemory(*memory.begin());
 
+    std::list<UnitSharedMemory> mi;
+    for (auto iter2 = memory.begin(); iter2 != memory.end(); iter2++)
+    {
+        mi.push_back(UnitSharedMemory(*iter2));
+    }
 
-    float* out = new float[100];
-    float* in = new float[100];
+    for (auto iter2 = mi.begin(); iter2 != mi.end(); iter2++)
+    {
+        for (std::list<ConfigUnitGate>::iterator iter = gaties.begin(); iter != gaties.end(); iter++)
+        {
+            int res;
+            res = iter2->FillConfigUnitGate(&*iter);
+            std::cout << res << std::endl;
+        }
+        std::cout<< std::endl;
+    }
+    
+ 
+
+    float* out = NULL;
+    float* in = NULL;
+    for (auto iter = mi.begin(); iter != mi.end(); iter++)
+    {
+        if ((&*iter)->parametrs.type_data == TypeData::OutPut) out = (float*)(&*iter)->buf;
+        if ((&*iter)->parametrs.type_data == TypeData::InPut) in = (float*)(&*iter)->buf;
+    }
+
     for (int i = 0; i < 100; i++)
     {
         out[i] = i;
     }
 
     std::cout << "Hello World!\n";
-
-    //tcp_unit* ser1 = tcp_unit::create_tcp_unit("Server",1, "127.0.0.1", 32000, "analog", 100, (char*)out,0);
-    tcp_unit* cli1 = tcp_unit::create_tcp_unit("Client", 1, "192.168.109.128", 32000, "analog", 100, (char*)in, 0);
+    std::list<tcp_unit*> units_gate;
+    int id = 0;
+    for (auto iter = gaties.begin(); iter != gaties.end(); iter++)
+    {
+        units_gate.push_back(tcp_unit::create_tcp_unit(*iter, id));
+        id++;
+    }
 
 next:
-    Sleep(2000);
+    /*Sleep(2000);
     for (int i = 0; i < 100; i++)
     {
         out[i]++;
@@ -40,7 +73,7 @@ next:
 
     std::cout << in[0] << std::endl;
     std::cout << in[99] << std::endl;
-
+    */
     goto next;
 
 }

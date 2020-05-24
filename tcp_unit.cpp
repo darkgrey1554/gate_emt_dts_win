@@ -5,7 +5,7 @@
 /// вспомогательные функции
 int read_config_file(const char* Namefile, std::list<ConfigSharedMemory>* listsharmem, std::list<ConfigUnitGate>* listunitgate)
 {
-    FILE* config_file;
+    FILE* config_file = NULL;
     char simvol = 0;
     std::string str_info;
     std::string helpstr;
@@ -15,6 +15,7 @@ int read_config_file(const char* Namefile, std::list<ConfigSharedMemory>* listsh
     ConfigUnitGate UnitGate;
 
     config_file = fopen(Namefile, "r");
+    if (config_file == NULL) return -1;
 
     for (;;)
     {
@@ -203,25 +204,39 @@ int read_config_file(const char* Namefile, std::list<ConfigSharedMemory>* listsh
     return 0;
 }
 
+std::ostream& operator<<(std::ostream& out, TypeSignal& m) 
+{
+    if (m == TypeSignal::Analog) out << "Analog";
+    if (m == TypeSignal::Discrete) out << "Discrete";
+    if (m == TypeSignal::Nothing) out << "Nothing";
+    return out;
+}
 
 /// TCP_UNIT
-tcp_unit* tcp_unit::create_tcp_unit(std::string type_unit, int id, std::string ip, int port, std::string t_data, int s_data, char* mass_data, int bais)
+tcp_unit* tcp_unit::create_tcp_unit(ConfigUnitGate gate, int id)
 {
-    if (type_unit == "Server") return new tcp_server(id, ip, port, t_data, s_data, mass_data, bais);
-    if (type_unit == "Client")return new tcp_client(id, ip, port, t_data, s_data, mass_data, bais);;
+    if (gate.type_unit==TypeUnitGate::SERVER) return new tcp_server(gate, id);
+    if (gate.type_unit == TypeUnitGate::CLIENT)return new tcp_client(gate,id);;
 }
 
 
 /// TCP _SERVER
-tcp_server::tcp_server(int id, std::string ip, int port, std::string t_data, int s_data, char* m_data, int bais)
+tcp_server::tcp_server(ConfigUnitGate confgate, int id)
 {
      ID = id;
-     IP_Server = ip;
-     PORT = port;
-     size_data = s_data;
-     mass_data = m_data;
-     type_data = t_data;
-     offset = bais*4; /// пока умнодение на 4 (учет размера int float)
+     IP_Server = confgate.IP;
+     PORT = confgate.Port;
+     size_data = confgate.size_data;
+     mass_data = confgate.buf_data;
+     type_signal = confgate.type_signal;
+     offset = confgate.offset*4;
+     mutex_data = confgate.mutex_data;
+     
+     if (type_signal == TypeSignal::Analog || type_signal == TypeSignal::Discrete)
+     {
+         size_data *= 4;
+         offset *= 4;
+     }
      thread_unit = std::thread(&tcp_server::thread_tcp_server, this);
 }
 
@@ -278,7 +293,7 @@ int tcp_server::thread_tcp_server()
     std::cout << "SERVER INITIALIZED ID: " << ID
         << " IP: " << IP_Server
         << " PORT: " << PORT
-        << " TYPE_DATA: " << type_data << std::endl;
+        << " TYPE_SIGNAL: " << type_signal << std::endl;
 
     for (;;)
     {
@@ -350,15 +365,22 @@ void tcp_server::close_tcp_unit()
 
 
 /// TCP_CLIENT
-tcp_client::tcp_client(int id, std::string ip, int port, std::string t_data, int s_data, char* m_data, int bais)
+tcp_client::tcp_client(ConfigUnitGate confgate, int id)
 {
     ID = id;
-    IP_Server = ip;
-    PORT = port;
-    size_data = s_data;
-    mass_data = m_data;
-    type_data = t_data;
-    offset = bais * 4; /// пока умнодение на 4 (учет размера int float)
+    IP_Server = confgate.IP;
+    PORT = confgate.Port;
+    size_data = confgate.size_data;
+    mass_data = confgate.buf_data;
+    type_signal = confgate.type_signal;
+    offset = confgate.offset * 4;
+    mutex_data = confgate.mutex_data;
+
+    if (type_signal == TypeSignal::Analog || type_signal == TypeSignal::Discrete)
+    {
+        size_data *= 4;
+        offset *= 4;
+    }
     thread_unit = std::thread(&tcp_client::thread_tcp_client, this);
 }
 
@@ -438,7 +460,7 @@ int tcp_client::thread_tcp_client()
                 ibuf_recv++;
             }
 
-            Sleep(1000);
+            Sleep(frequency); // здесь реализовать частоту посылки запрос;
           
         }
     }
@@ -454,4 +476,38 @@ void tcp_client::restart_thread()
 void tcp_client::close_tcp_unit()
 {
     std::cout << "close_tcp_unit" << std::endl;
+}
+
+
+
+/// UNIT_SHARED_MEMORY
+
+UnitSharedMemory::UnitSharedMemory(ConfigSharedMemory in_parametrs)
+{
+    parametrs = in_parametrs;
+    /// --- надо сделать проверки по параметрам --- ///
+    //---------
+    ///////////////////////////////////////////////////
+    std::string mutexname = "mutex";
+    mutexname += parametrs.name_memory.c_str();
+    if (parametrs.type_signal == TypeSignal::Analog || parametrs.type_signal == TypeSignal::Discrete)
+    {
+        parametrs.size *= 4;
+    }
+    mutex = CreateMutexA(NULL, FALSE, mutexname.c_str());
+    memory = CreateFileMappingA(INVALID_HANDLE_VALUE, NULL, PAGE_READWRITE, 0, parametrs.size, parametrs.name_memory.c_str());
+    buf = (char*)MapViewOfFile(memory, FILE_MAP_ALL_ACCESS, 0, 0, parametrs.size);
+};
+
+int UnitSharedMemory::FillConfigUnitGate(ConfigUnitGate* configgate)
+{
+    if (configgate->type_signal == parametrs.type_signal && 
+        (configgate->type_unit == TypeUnitGate::SERVER && parametrs.type_data == TypeData::OutPut ||
+         configgate->type_unit == TypeUnitGate::CLIENT && parametrs.type_data == TypeData::InPut))
+    {
+        configgate->mutex_data = mutex;
+        configgate->buf_data = buf;
+        return 0;
+    }
+    return -1;
 }
