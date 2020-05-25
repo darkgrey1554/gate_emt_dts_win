@@ -99,7 +99,7 @@ class tcp_server : public tcp_unit
 	int thread_tcp_server();
     std::thread thread_unit;
     int ID;
-
+    int s_data;
     public:
 
 	tcp_server(ConfigUnitGate confgatem, int id);
@@ -113,6 +113,7 @@ class tcp_client : public tcp_unit
 	int thread_tcp_client();
     std::thread thread_unit;
     int ID;
+    int s_data;
 public:
 
 	tcp_client(ConfigUnitGate confgatem, int id);

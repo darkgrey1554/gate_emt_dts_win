@@ -227,8 +227,7 @@ tcp_server::tcp_server(ConfigUnitGate confgate, int id)
      ID = id;
      if (set.type_signal == TypeSignal::Analog || set.type_signal == TypeSignal::Discrete)
      {
-         set.size_data *= 4;
-         set.offset *= 4;
+         s_data=4;
      }
 
      thread_unit = std::thread(&tcp_server::thread_tcp_server, this);
@@ -246,7 +245,7 @@ int tcp_server::thread_tcp_server()
     char* buf_recv = new char[10];
     int count_recv = 0;
     int num_recv = 1;
-    char* buf_send = new char[set.size_data * 4+4+1];
+    char* buf_send = new char[set.size_data * s_data +4+1];
     char* ibuf_send;
     char* imass_data;
 
@@ -344,14 +343,14 @@ int tcp_server::thread_tcp_server()
 
                 ibuf_send++;
                 imass_data = set.buf_data;               
-                for (int i = 0; i < set.size_data * 4; i++)
+                for (int i = 0; i < set.size_data * s_data; i++)
                 {
                     *ibuf_send = *imass_data;
                     ibuf_send++;
                     imass_data++;
                 }
 
-                send(client, buf_send, set.size_data * 4 + 5, NULL);    
+                send(client, buf_send, set.size_data * s_data + 5, NULL);
 
             }
         }
@@ -379,8 +378,7 @@ tcp_client::tcp_client(ConfigUnitGate confgate, int id)
 
     if (set.type_signal == TypeSignal::Analog || set.type_signal == TypeSignal::Discrete)
     {
-        set.size_data *= 4;
-        set.offset *= 4;
+        s_data=4;
     }
     thread_unit = std::thread(&tcp_client::thread_tcp_client, this);
 }
@@ -393,8 +391,9 @@ int tcp_client::thread_tcp_client()
     sockaddr_in addr_server;
     int size_addr = sizeof(addr_server);
 
-    char* buf_recv = new char[set.size_data*4+5];
+    char* buf_recv = new char[set.size_data* s_data +5];
     int count_recv = 0;
+    int res_recv = 0;
     int num_recv = 0;
     char* ibuf_recv;
     char* imass_data;
@@ -424,10 +423,16 @@ int tcp_client::thread_tcp_client()
     addr_server.sin_addr.s_addr = inet_addr(set.IP.c_str());
     addr_server.sin_port = htons(set.Port);
 
-    
+        
           
     for (;;)
     {
+        server = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
+        if (server == INVALID_SOCKET)
+        {
+            std::cout << "CLIENT ID: " << ID << "/tERROR INITIALIZATION CODE ERROR: " << WSAGetLastError() << std::endl;
+            return -1;
+        }
 
         if (connect(server, (sockaddr*)&addr_server, sizeof(addr_server)) == SOCKET_ERROR)
         {
@@ -448,7 +453,7 @@ int tcp_client::thread_tcp_client()
         {           
             QueryPerformanceCounter(&timenow);
             time = (timenow.QuadPart - timelast.QuadPart) * 1000. / fhz.QuadPart;
-            if (time > set.frequency) std::cout << "CLIENT ID: " << ID << "\tWARNING: LIMIT_TIME_MESSENG_READING_EXCEEDED " << time << std::endl;
+            if (time > set.frequency) std::cout << "CLIENT ID: " << ID << "\tWARNING: LIMIT_TIME_MESSENG_READING_EXCEEDED " << time << " ms"<<std::endl;
                 
             for (;;)
             {
@@ -462,18 +467,26 @@ int tcp_client::thread_tcp_client()
             buf_send[0] = 3;
             send(server, buf_send, 1, NULL);
             count_recv = 0;
+            res_recv = 0;
             for (;;)
             {
-                count_recv += recv(server, buf_recv + count_recv, set.size_data * 4 + 5 - count_recv, NULL);
-                if (count_recv < 5) continue;
+                res_recv=recv(server, buf_recv + count_recv, set.size_data * s_data + 5 - count_recv, NULL);
+                if (res_recv == 0) break;
+                count_recv += res_recv;
+                if (count_recv < 5) continue;             
                 num_recv = *((int*)(buf_recv + 1));
-                if (count_recv < num_recv * 4 + 5) { continue; }
+                if (count_recv < num_recv * s_data + 5) { continue; }
                 else break;
+            }
+            if (res_recv == 0)
+            {
+                closesocket(server);
+                break;
             }
             ibuf_recv = buf_recv + 5;
             imass_data = set.buf_data;
 
-            for (int i = 0; i < num_recv * 4; i++)
+            for (int i = 0; i < num_recv * s_data; i++)
             {
                 *imass_data = *ibuf_recv;
                 imass_data++;

@@ -7,9 +7,9 @@ D:\Program Files (x86)\project\gate_emt_dts_win\tcp_unit.cpp(143,61): warning C4
 D:\Program Files (x86)\project\gate_emt_dts_win\tcp_unit.cpp(156,61): warning C4267: =: преобразование из "size_t" в "int"; возможна потеря данных
 D:\Program Files (x86)\project\gate_emt_dts_win\tcp_unit.cpp(168,61): warning C4267: =: преобразование из "size_t" в "int"; возможна потеря данных
 D:\Program Files (x86)\project\gate_emt_dts_win\tcp_unit.cpp(180,61): warning C4267: =: преобразование из "size_t" в "int"; возможна потеря данных
-D:\Program Files (x86)\project\gate_emt_dts_win\tcp_unit.cpp(331,67): warning C4244: =: преобразование "double" в "float", возможна потеря данных
-D:\Program Files (x86)\project\gate_emt_dts_win\tcp_unit.cpp(450,67): warning C4244: =: преобразование "double" в "float", возможна потеря данных
-D:\Program Files (x86)\project\gate_emt_dts_win\tcp_unit.cpp(456,70): warning C4244: =: преобразование "double" в "float", возможна потеря данных
+D:\Program Files (x86)\project\gate_emt_dts_win\tcp_unit.cpp(330,67): warning C4244: =: преобразование "double" в "float", возможна потеря данных
+D:\Program Files (x86)\project\gate_emt_dts_win\tcp_unit.cpp(455,67): warning C4244: =: преобразование "double" в "float", возможна потеря данных
+D:\Program Files (x86)\project\gate_emt_dts_win\tcp_unit.cpp(461,70): warning C4244: =: преобразование "double" в "float", возможна потеря данных
   Создание кода
   Previous IPDB not found, fall back to full compilation.
 D:\Program Files (x86)\project\gate_emt_dts_win\tcp_unit.cpp(220): warning C4715: tcp_unit::create_tcp_unit: значение возвращается не при всех путях выполнения

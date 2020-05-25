@@ -8,6 +8,7 @@
 
 int main()
 {
+    
 
     std::list<ConfigSharedMemory> memory;
     std::list<ConfigUnitGate> gaties;
@@ -33,11 +34,8 @@ int main()
     {
         for (std::list<ConfigUnitGate>::iterator iter = gaties.begin(); iter != gaties.end(); iter++)
         {
-            int res;
-            res = iter2->FillConfigUnitGate(&*iter);
-            std::cout << res << std::endl;
+            iter2->FillConfigUnitGate(&*iter);
         }
-        std::cout<< std::endl;
     }
     
  
