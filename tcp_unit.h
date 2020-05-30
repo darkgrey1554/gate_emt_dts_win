@@ -63,6 +63,7 @@ struct ConfigUnitGate
     TypeUnitGate type_unit=TypeUnitGate::EMPTY;
     char* buf_data;
     HANDLE mutex_data = INVALID_HANDLE_VALUE;
+    HANDLE semofor_data = INVALID_HANDLE_VALUE;
 
     void clear()
     {
@@ -75,6 +76,7 @@ struct ConfigUnitGate
         type_unit = TypeUnitGate::EMPTY;
         buf_data = NULL;
         mutex_data = INVALID_HANDLE_VALUE;
+        semofor_data = INVALID_HANDLE_VALUE;
     }
 };
 
@@ -127,6 +129,7 @@ class UnitSharedMemory
     public:
     HANDLE memory;
     HANDLE mutex;
+    HANDLE semofor;
     char* buf;    
     ConfigSharedMemory parametrs; 
 

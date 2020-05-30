@@ -2,8 +2,8 @@
 @EMT_InputAnalog	100	sharmemory_emt_analog_in
 @EMT_OutputAnalog	100	sharmemory_emt_analog_out
 [GATE]
-@GATE_InputAnalog	0	100	192.168.109.128	32006	1000
-@GATE_OutputAnalog	0	100	192.168.109.1	32005	1000
+@GATE_InputAnalog	0	100	192.168.109.128	40001	100
+@GATE_OutputAnalog	0	100	192.168.109.1	40000	100
 [List]
 @KKS
 EMT	RAEK

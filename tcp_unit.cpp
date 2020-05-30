@@ -313,7 +313,7 @@ int tcp_server::thread_tcp_server()
         QueryPerformanceCounter(&timelast);
         for (;;)
         {
-            count_recv = 0;
+            /*count_recv = 0;
             for (;;)
             {
                 count_recv += recv(client, buf_recv + count_recv, 1, NULL);
@@ -324,15 +324,16 @@ int tcp_server::thread_tcp_server()
             {
                 std::cout << "SERVER ID: " << ID << "/tERROR RECV CODE ERROR: " << WSAGetLastError() << std::endl;
                 break;
-            }
+            }*/
 
+            WaitForSingleObject(set.semofor_data, INFINITE);
             QueryPerformanceCounter(&timenow);
             time = (timenow.QuadPart - timelast.QuadPart) * 1000. / fhz.QuadPart;
             if (time > set.frequency) std::cout << "SERVER ID: " << ID << "\tWARNING: LIMIT_TIME_MESSENG_READING_EXCEEDED " << time << std::endl;
             QueryPerformanceCounter(&timelast);
 
-            if (buf_recv[0] == 3)
-            {
+            //if (buf_recv[0] == 3)
+            //{
                 ibuf_send = buf_send;
                 *ibuf_send = 3;
                 for (int i = 0; i < 4; i++)
@@ -342,17 +343,18 @@ int tcp_server::thread_tcp_server()
                 }
 
                 ibuf_send++;
-                imass_data = set.buf_data;               
+                imass_data = set.buf_data;   
+                WaitForSingleObject(set.mutex_data, INFINITE);
                 for (int i = 0; i < set.size_data * s_data; i++)
                 {
                     *ibuf_send = *imass_data;
                     ibuf_send++;
                     imass_data++;
                 }
-
+                ReleaseMutex(set.mutex_data);
                 send(client, buf_send, set.size_data * s_data + 5, NULL);
 
-            }
+            //}
         }
     }
     
@@ -455,17 +457,17 @@ int tcp_client::thread_tcp_client()
             time = (timenow.QuadPart - timelast.QuadPart) * 1000. / fhz.QuadPart;
             if (time > set.frequency) std::cout << "CLIENT ID: " << ID << "\tWARNING: LIMIT_TIME_MESSENG_READING_EXCEEDED " << time << " ms"<<std::endl;
                 
-            for (;;)
+            /*for (;;)
             {
                 QueryPerformanceCounter(&timenow);
                 time= (timenow.QuadPart - timelast.QuadPart) * 1000. / fhz.QuadPart;
                 if (time > set.frequency-TIME_DIV) break;
                 Sleep(1);
-            }
+            }*/
 
-            QueryPerformanceCounter(&timelast);
-            buf_send[0] = 3;
-            send(server, buf_send, 1, NULL);
+            //QueryPerformanceCounter(&timelast);
+            //buf_send[0] = 3;
+            //send(server, buf_send, 1, NULL);
             count_recv = 0;
             res_recv = 0;
             for (;;)
@@ -492,6 +494,7 @@ int tcp_client::thread_tcp_client()
                 imass_data++;
                 ibuf_recv++;
             }
+            QueryPerformanceCounter(&timelast);
         }
     }
 
@@ -519,7 +522,9 @@ UnitSharedMemory::UnitSharedMemory(ConfigSharedMemory in_parametrs)
     //---------
     ///////////////////////////////////////////////////
     std::string mutexname = "mutex";
+    std::string semoforname = "semofor";
     mutexname += parametrs.name_memory.c_str();
+    semoforname += parametrs.name_memory.c_str();
     if (parametrs.type_signal == TypeSignal::Analog || parametrs.type_signal == TypeSignal::Discrete)
     {
         parametrs.size *= 4;
@@ -527,6 +532,8 @@ UnitSharedMemory::UnitSharedMemory(ConfigSharedMemory in_parametrs)
     mutex = CreateMutexA(NULL, FALSE, mutexname.c_str());
     memory = CreateFileMappingA(INVALID_HANDLE_VALUE, NULL, PAGE_READWRITE, 0, parametrs.size, parametrs.name_memory.c_str());
     buf = (char*)MapViewOfFile(memory, FILE_MAP_ALL_ACCESS, 0, 0, parametrs.size);
+
+    semofor = CreateSemaphoreA(NULL, 0, 1, semoforname.c_str());
 };
 
 int UnitSharedMemory::FillConfigUnitGate(ConfigUnitGate* configgate)
@@ -536,6 +543,7 @@ int UnitSharedMemory::FillConfigUnitGate(ConfigUnitGate* configgate)
          configgate->type_unit == TypeUnitGate::CLIENT && parametrs.type_data == TypeData::InPut))
     {
         configgate->mutex_data = mutex;
+        configgate->semofor_data = semofor;
         configgate->buf_data = buf;
         return 0;
     }
