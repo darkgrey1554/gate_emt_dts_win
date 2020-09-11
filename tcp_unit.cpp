@@ -67,6 +67,10 @@ int read_config_file(const char* Namefile, std::list<ConfigSharedMemory>* listsh
             {
                 UnitMem.type_signal = TypeSignal::Analog;
             }
+            else if (str_info.find("Binar") != -1)
+            {
+                UnitMem.type_signal = TypeSignal::Binar;
+            }
             else
             {
                 std::cout << "MAIT\tERROR_FORMATION_OF_CONFIG_FILE" << std::endl;
@@ -125,6 +129,10 @@ int read_config_file(const char* Namefile, std::list<ConfigSharedMemory>* listsh
             else if (str_info.find("Analog") != -1)
             {
                 UnitGate.type_signal = TypeSignal::Analog;
+            }
+            else if (str_info.find("Binar") != -1)
+            {
+                UnitGate.type_signal = TypeSignal::Binar;
             }
             else
             {
@@ -208,6 +216,7 @@ std::ostream& operator<<(std::ostream& out, TypeSignal& m)
 {
     if (m == TypeSignal::Analog) out << "Analog";
     if (m == TypeSignal::Discrete) out << "Discrete";
+    if (m == TypeSignal::Binar) out << "Binar";
     if (m == TypeSignal::Nothing) out << "Nothing";
     return out;
 }
@@ -229,6 +238,7 @@ tcp_server::tcp_server(ConfigUnitGate confgate, int id)
      {
          s_data=4;
      }
+     if (set.type_signal == TypeSignal::Binar) s_data = 1;
 
      thread_unit = std::thread(&tcp_server::thread_tcp_server, this);
 }
@@ -236,7 +246,7 @@ tcp_server::tcp_server(ConfigUnitGate confgate, int id)
 int tcp_server::thread_tcp_server()
 {
     WSADATA wsaData;
-    int result=0;
+    volatile int result=0;
     SOCKET listensocket = INVALID_SOCKET;
     SOCKET client = INVALID_SOCKET;
     sockaddr_in addr_server;
@@ -248,6 +258,9 @@ int tcp_server::thread_tcp_server()
     char* buf_send = new char[set.size_data * s_data +4+1];
     char* ibuf_send;
     char* imass_data;
+
+    HANDLE mm;
+    mm = CreateMutexA(NULL, FALSE, "asdqwe");
 
     LARGE_INTEGER timenow;
     LARGE_INTEGER timelast;
@@ -287,28 +300,32 @@ int tcp_server::thread_tcp_server()
         closesocket(listensocket);
         return -1;
     }
-
+    WaitForSingleObject(mm, INFINITE);
     std::cout << "SERVER INITIALIZED ID: " << ID
         << " IP: " << set.IP
         << " PORT: " << set.Port
         << " TYPE_SIGNAL: " << set.type_signal << std::endl;
-
+    ReleaseMutex(mm);
     for (;;)
     {
         client = accept(listensocket, (sockaddr*)&addr_client, &lenght_addr_client);
         if (client == INVALID_SOCKET)
         {
-            std::cout << "SERVER ID: " << ID << "\tERROR CONNECTION CLIENT CODE ERROR: " << WSAGetLastError() << std::endl;
+            std::cout << "SERVER ID: " << ID << "\tERROR CONNECTED CLIENT CODE ERROR: " << WSAGetLastError() << std::endl;
+            closesocket(client);
+            Sleep(20);
             continue;
         }
 
-        std::cout << "SERVER ID: " << ID << "\tCONNECTION WITH CLIENT IP: "
+        WaitForSingleObject(mm, INFINITE);
+        std::cout << "SERVER ID: " << ID << "\tCONNECTED WITH CLIENT\tIP: "
             << (int)addr_client.sin_addr.S_un.S_un_b.s_b1 << "."
             << (int)addr_client.sin_addr.S_un.S_un_b.s_b2 << "."
             << (int)addr_client.sin_addr.S_un.S_un_b.s_b3 << "."
             << (int)addr_client.sin_addr.S_un.S_un_b.s_b4
-            << "  PORT: " << addr_client.sin_port << std::endl;        
-        
+            << "\tPORT: " << addr_client.sin_port << std::endl;        
+        ReleaseMutex(mm);
+
         QueryPerformanceCounter(&timenow);
         QueryPerformanceCounter(&timelast);
         for (;;)
@@ -326,16 +343,17 @@ int tcp_server::thread_tcp_server()
                 break;
             }*/
 
+            /// --- ожидание семофора для отпраки данных
             WaitForSingleObject(set.semofor_data, INFINITE);
             QueryPerformanceCounter(&timenow);
             time = (timenow.QuadPart - timelast.QuadPart) * 1000. / fhz.QuadPart;
-            if (time > set.frequency) std::cout << "SERVER ID: " << ID << "\tWARNING: LIMIT_TIME_MESSENG_READING_EXCEEDED " << time << std::endl;
+            //if (time > set.frequency) std::cout << "SERVER ID: " << ID << "\tWARNING: LIMIT_TIME_MESSENG_READING_EXCEEDED " << time << std::endl;
             QueryPerformanceCounter(&timelast);
 
             //if (buf_recv[0] == 3)
             //{
                 ibuf_send = buf_send;
-                *ibuf_send = 3;
+                *ibuf_send = 3;  // команда  не важно какая она одна )) 
                 for (int i = 0; i < 4; i++)
                 {
                     ibuf_send++;
@@ -343,7 +361,7 @@ int tcp_server::thread_tcp_server()
                 }
 
                 ibuf_send++;
-                imass_data = set.buf_data;   
+                imass_data = set.buf_data;
                 WaitForSingleObject(set.mutex_data, INFINITE);
                 for (int i = 0; i < set.size_data * s_data; i++)
                 {
@@ -352,9 +370,14 @@ int tcp_server::thread_tcp_server()
                     imass_data++;
                 }
                 ReleaseMutex(set.mutex_data);
-                send(client, buf_send, set.size_data * s_data + 5, NULL);
-
-            //}
+                result=send(client, buf_send, set.size_data * s_data + 5, NULL);
+                if (result == SOCKET_ERROR)
+                {
+                    std::cout << "SERVER ID: " << ID << "\tERROR TRANSFER DATA CODE ERROR: " << WSAGetLastError() << std::endl;
+                    closesocket(client);
+                    Sleep(20);
+                    break;
+                }
         }
     }
     
@@ -380,8 +403,9 @@ tcp_client::tcp_client(ConfigUnitGate confgate, int id)
 
     if (set.type_signal == TypeSignal::Analog || set.type_signal == TypeSignal::Discrete)
     {
-        s_data=4;
+        s_data = 4;
     }
+    else if (set.type_signal == TypeSignal::Binar) s_data = 1;
     thread_unit = std::thread(&tcp_client::thread_tcp_client, this);
 }
 
@@ -406,6 +430,8 @@ int tcp_client::thread_tcp_client()
     LARGE_INTEGER fhz;
     QueryPerformanceFrequency(&fhz);
     float time;
+    HANDLE mm;
+    mm = CreateMutexA(NULL, FALSE, "asdqwe");
 
     result = WSAStartup(MAKEWORD(2, 2), &wsaData);
     if (result != 0)
@@ -432,20 +458,22 @@ int tcp_client::thread_tcp_client()
         server = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
         if (server == INVALID_SOCKET)
         {
-            std::cout << "CLIENT ID: " << ID << "/tERROR INITIALIZATION CODE ERROR: " << WSAGetLastError() << std::endl;
+            std::cout << "CLIENT ID: " << ID << "\tERROR INITIALIZATION CODE ERROR: " << WSAGetLastError() << std::endl;
             return -1;
         }
 
         if (connect(server, (sockaddr*)&addr_server, sizeof(addr_server)) == SOCKET_ERROR)
         {
-            std::cout << "CLIENT ID: " << ID << "/tERROR CONNECTION WITH SERVER CODE ERROR: " << WSAGetLastError() << std::endl;
+            //std::cout << "CLIENT ID: " << ID << "\tERROR CONNECTION WITH SERVER CODE ERROR: " << WSAGetLastError() << std::endl;
             closesocket(server);
             Sleep(2000);
             continue;
         }
         else
         {
-            std::cout << "CLIENT ID: " << ID << " CONNECTED WITH SERVER IP: " << set.IP << " PORT: " << set.Port << std::endl;
+            WaitForSingleObject(mm, INFINITE);
+            std::cout << "CLIENT ID: " << ID << "\tCONNECTED WITH SERVER\tIP: " << set.IP << "\tPORT: " << set.Port << std::endl;
+            ReleaseMutex(mm);
         }
 
         QueryPerformanceCounter(&timenow);
@@ -455,7 +483,7 @@ int tcp_client::thread_tcp_client()
         {           
             QueryPerformanceCounter(&timenow);
             time = (timenow.QuadPart - timelast.QuadPart) * 1000. / fhz.QuadPart;
-            if (time > set.frequency) std::cout << "CLIENT ID: " << ID << "\tWARNING: LIMIT_TIME_MESSENG_READING_EXCEEDED " << time << " ms"<<std::endl;
+            //if (time > set.frequency) std::cout << "CLIENT ID: " << ID << "\tWARNING: LIMIT_TIME_MESSENG_READING_EXCEEDED " << time << " ms"<<std::endl;
                 
             /*for (;;)
             {
@@ -468,6 +496,8 @@ int tcp_client::thread_tcp_client()
             //QueryPerformanceCounter(&timelast);
             //buf_send[0] = 3;
             //send(server, buf_send, 1, NULL);
+
+            /// --- прием данных и запись в буфер ЕМТ
             count_recv = 0;
             res_recv = 0;
             for (;;)
@@ -527,7 +557,7 @@ UnitSharedMemory::UnitSharedMemory(ConfigSharedMemory in_parametrs)
     semoforname += parametrs.name_memory.c_str();
     if (parametrs.type_signal == TypeSignal::Analog || parametrs.type_signal == TypeSignal::Discrete)
     {
-        parametrs.size *= 4;
+        parametrs.size *= 4; // 4 байта под тип данных
     }
     mutex = CreateMutexA(NULL, FALSE, mutexname.c_str());
     memory = CreateFileMappingA(INVALID_HANDLE_VALUE, NULL, PAGE_READWRITE, 0, parametrs.size, parametrs.name_memory.c_str());

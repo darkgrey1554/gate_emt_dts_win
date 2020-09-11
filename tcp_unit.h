@@ -25,7 +25,8 @@ enum class TypeSignal
 {
     Nothing,
     Analog,
-    Discrete
+    Discrete,
+    Binar
 };
 
 std::ostream& operator<<(std::ostream &out,TypeSignal& m);

@@ -8,8 +8,11 @@
 
 int main()
 {
-    
-
+    system("cls");
+    std::cout << "---------- NODE EMT -----------" << std::endl;
+    std::cout << "-------- PS: GATE EMT --------- " << std::endl;
+    std::cout << "PRESS ANY KEY TO START WORK ...." << std::endl;
+    getch();
     std::list<ConfigSharedMemory> memory;
     std::list<ConfigUnitGate> gaties;
 
@@ -21,7 +24,9 @@ int main()
         getch();
         return -1;
     }
-    
+
+    /// --- инициализация общей памяти
+
     UnitSharedMemory* m1 = new UnitSharedMemory(*memory.begin());
 
     std::list<UnitSharedMemory> mi;
@@ -30,6 +35,8 @@ int main()
         mi.push_back(UnitSharedMemory(*iter2));
     }
 
+    /// связка общей памяти с конфигурацией шлюза передачи шлюза
+
     for (auto iter2 = mi.begin(); iter2 != mi.end(); iter2++)
     {
         for (std::list<ConfigUnitGate>::iterator iter = gaties.begin(); iter != gaties.end(); iter++)
@@ -37,8 +44,8 @@ int main()
             iter2->FillConfigUnitGate(&*iter);
         }
     }
-    
- 
+
+    /// это чтобы прямо тут отлаживать передачу данных без EMT_SIMULATORa
 
     float* out = NULL;
     float* in = NULL;
@@ -48,12 +55,13 @@ int main()
         if ((&*iter)->parametrs.type_data == TypeData::InPut) in = (float*)(&*iter)->buf;
     }
 
-    for (int i = 0; i < 100; i++)
+    /*for (int i = 0; i < 100; i++)
     {
         out[i] = (float)i;
-    }
+    }*/
 
-    std::cout << "Hello World!\n";
+
+    /// --- инициализация потоков передачи шлюза
     std::list<tcp_unit*> units_gate;
     int id = 0;
     for (auto iter = gaties.begin(); iter != gaties.end(); iter++)
@@ -63,8 +71,8 @@ int main()
     }
 
 next:
-    /*Sleep(2000);
-    for (int i = 0; i < 100; i++)
+    Sleep(2000);
+    /*for (int i = 0; i < 100; i++)
     {
         out[i]++;
     }
